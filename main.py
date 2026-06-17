@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.face_shape_classifier import classify_face_shape
 from services.ratio_calculator import build_face_analysis_data
 from services.landmark_detector import detect_face_landmarks
+from schemas import AnalyzeFaceResponse
 
 app = FastAPI(title="Face Analysis AI Backend")
 
@@ -27,7 +28,7 @@ def health_check():
     }
 
 
-@app.post("/api/analyze-face")
+@app.post("/api/analyze-face", response_model=AnalyzeFaceResponse)
 async def analyze_face(file: UploadFile = File(...)):
     # 1. 파일 형식 검사
     if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
