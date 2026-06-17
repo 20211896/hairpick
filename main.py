@@ -1,13 +1,9 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-import cv2
-import numpy as np
-import mediapipe as mp
 from services.face_shape_classifier import classify_face_shape
 from services.ratio_calculator import build_face_analysis_data
+from services.landmark_detector import detect_face_landmarks
 
 app = FastAPI(title="Face Analysis AI Backend")
-
-mp_face_mesh = mp.solutions.face_mesh
 
 
 
@@ -40,77 +36,37 @@ async def analyze_face(file: UploadFile = File(...)):
             detail="빈 파일입니다."
         )
 
-    # 3. OpenCV 이미지 디코딩
-    np_arr = np.frombuffer(file_bytes, np.uint8)
-    image_bgr = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    detection_result = detect_face_landmarks(file_bytes)
 
-    if image_bgr is None:
+    if not detection_result.get("success"):
         raise HTTPException(
             status_code=400,
-            detail="이미지를 읽을 수 없습니다."
+            detail=detection_result.get("message", "이미지를 읽을 수 없습니다.")
         )
 
-    height, width, channels = image_bgr.shape
+    image_size = detection_result["image_size"]
+    face_count = detection_result["face_count"]
+    landmarks = detection_result["landmarks"]
 
-    # 4. MediaPipe 입력용 RGB 변환
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-
-    # 5. Face Mesh 실행
-    with mp_face_mesh.FaceMesh(
-        static_image_mode=True,
-        max_num_faces=2,
-        refine_landmarks=True,
-        min_detection_confidence=0.5
-    ) as face_mesh:
-        results = face_mesh.process(image_rgb)
-
-    # 6. 얼굴 미검출 처리
-    if not results.multi_face_landmarks:
+    if not detection_result["face_detected"]:
         return {
             "success": False,
             "face_detected": False,
             "face_count": 0,
             "filename": file.filename,
-            "image_size": {
-                "width": width,
-                "height": height,
-                "channels": channels
-            },
+            "image_size": image_size,
             "message": "이미지에서 얼굴을 찾을 수 없습니다."
         }
 
-    face_count = len(results.multi_face_landmarks)
-
-    # 7. 여러 얼굴 감지 처리
     if face_count > 1:
         return {
             "success": False,
             "face_detected": True,
             "face_count": face_count,
             "filename": file.filename,
-            "image_size": {
-                "width": width,
-                "height": height,
-                "channels": channels
-            },
+            "image_size": image_size,
             "message": "여러 명의 얼굴이 감지되었습니다. 한 명의 얼굴만 포함된 이미지를 사용해주세요."
         }
-
-    # 8. 첫 번째 얼굴의 랜드마크 추출
-    face_landmarks = results.multi_face_landmarks[0]
-
-    landmarks = []
-    for idx, landmark in enumerate(face_landmarks.landmark):
-        x_px = int(landmark.x * width)
-        y_px = int(landmark.y * height)
-        z = float(landmark.z)
-
-        landmarks.append({
-            "index": idx,
-            "x": x_px,
-            "y": y_px,
-            "z": z
-        })
 
     analysis_data = build_face_analysis_data(landmarks)
 
@@ -134,11 +90,7 @@ async def analyze_face(file: UploadFile = File(...)):
         "filename": file.filename,
         "content_type": file.content_type,
         "file_size_bytes": len(file_bytes),
-        "image_size": {
-            "width": width,
-            "height": height,
-            "channels": channels
-        },
+        "image_size": image_size,
         "landmark_count": len(landmarks),
 
         # 기존 응답 구조: 하위 호환용
