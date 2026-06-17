@@ -1,9 +1,18 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from services.face_shape_classifier import classify_face_shape
 from services.ratio_calculator import build_face_analysis_data
 from services.landmark_detector import detect_face_landmarks
 
 app = FastAPI(title="Face Analysis AI Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 개발 단계에서는 전체 허용. 배포 시 프론트 도메인으로 제한 필요.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 
