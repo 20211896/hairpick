@@ -602,6 +602,64 @@ async def analyze_face(file: UploadFile = File(...)):
 
     face_shape = classify_face_shape(ratios)
 
+    overlay_points = key_landmarks
+
+    overlay_lines = [
+        {
+            "name": "face_height",
+            "label_ko": "얼굴 세로 길이",
+            "from": "top_face",
+            "to": "chin"
+        },
+        {
+            "name": "face_width",
+            "label_ko": "얼굴 전체 너비",
+            "from": "left_face_outer",
+            "to": "right_face_outer"
+        },
+        {
+            "name": "forehead_width",
+            "label_ko": "이마 폭",
+            "from": "left_forehead",
+            "to": "right_forehead"
+        },
+        {
+            "name": "cheekbone_width",
+            "label_ko": "광대 폭",
+            "from": "left_cheekbone",
+            "to": "right_cheekbone"
+        },
+        {
+            "name": "jaw_width",
+            "label_ko": "턱 폭",
+            "from": "left_jaw",
+            "to": "right_jaw"
+        },
+        {
+            "name": "lower_jaw_width",
+            "label_ko": "아래턱 폭",
+            "from": "left_lower_jaw",
+            "to": "right_lower_jaw"
+        },
+        {
+            "name": "lower_face_height",
+            "label_ko": "하관 길이",
+            "from": "nose_tip",
+            "to": "chin"
+        }
+    ]
+
+    analysis = {
+        "face_shape": face_shape,
+        "ratios": ratios,
+        "centers": centers
+    }
+
+    overlay = {
+        "points": overlay_points,
+        "lines": overlay_lines
+    }
+
     return {
         "success": True,
         "face_detected": True,
@@ -615,9 +673,16 @@ async def analyze_face(file: UploadFile = File(...)):
             "channels": channels
         },
         "landmark_count": len(landmarks),
+
+        # 기존 응답 구조: 하위 호환용
         "key_landmarks": key_landmarks,
         "ratios": ratios,
         "centers": centers,
         "face_shape": face_shape,
+
+        # 신규 응답 구조: 프론트엔드 연동용
+        "analysis": analysis,
+        "overlay": overlay,
+
         "message": "얼굴 랜드마크, 비율 계산, 가중치 기반 얼굴형 분류 성공"
     }
