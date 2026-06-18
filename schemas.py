@@ -17,10 +17,23 @@ class FaceShapeResult(BaseModel):
     second_candidate: Optional[Dict[str, Any]] = None
 
 
+class QualityResult(BaseModel):
+    face_center_offset_x_px: float
+    face_center_offset_x_ratio: float
+    eye_level_diff_px: float
+    eye_level_diff_to_face_width_ratio: float
+    face_size_ratio: Optional[float] = None
+    frontal_score: float
+    eye_level_score: float
+    quality_score: float
+    warnings: List[str]
+
+
 class AnalysisResult(BaseModel):
     face_shape: FaceShapeResult
     ratios: Dict[str, float]
     centers: Dict[str, Any]
+    quality: Optional[QualityResult] = None
 
 
 class AnalyzeFaceResponse(BaseModel):

@@ -83,6 +83,7 @@ async def analyze_face(file: UploadFile = File(...)):
     key_landmarks = analysis_data["key_landmarks"]
     ratios = analysis_data["ratios"]
     centers = analysis_data["centers"]
+    quality = analysis_data["quality"]
     overlay = analysis_data["overlay"]
 
     face_shape = classify_face_shape(ratios)
@@ -90,7 +91,8 @@ async def analyze_face(file: UploadFile = File(...)):
     analysis = {
         "face_shape": face_shape,
         "ratios": ratios,
-        "centers": centers
+        "centers": centers,
+        "quality": quality
     }
 
     return {

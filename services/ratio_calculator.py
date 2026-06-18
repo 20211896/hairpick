@@ -142,6 +142,39 @@ def build_face_analysis_data(landmarks: list) -> dict:
     mouth_center = midpoint(mouth_left, mouth_right)
 
     center_offset_x = round(abs(face_center["x"] - nose_tip["x"]), 2)
+    center_offset_x_ratio = safe_ratio(center_offset_x, face_width)
+
+    eye_level_diff_px = round(abs(left_eye_outer["y"] - right_eye_outer["y"]), 2)
+    eye_level_diff_to_face_width_ratio = safe_ratio(eye_level_diff_px, face_width)
+
+    # 이미지 크기 정보가 없는 단계이므로 얼굴 자체 기준 품질만 계산한다.
+    # face_size_ratio는 추후 image_size 기반으로 보강할 수 있다.
+    face_size_ratio = None
+
+    frontal_score = max(0.0, round(1 - min(center_offset_x_ratio / 0.12, 1), 4))
+    eye_level_score = max(0.0, round(1 - min(eye_level_diff_to_face_width_ratio / 0.08, 1), 4))
+
+    quality_score = round((frontal_score * 0.6) + (eye_level_score * 0.4), 4)
+
+    warnings = []
+
+    if center_offset_x_ratio >= 0.12:
+        warnings.append("얼굴 중심과 코 위치 차이가 커서 정면성이 낮을 수 있습니다.")
+
+    if eye_level_diff_to_face_width_ratio >= 0.08:
+        warnings.append("좌우 눈 높이 차이가 커서 얼굴이 기울어졌을 수 있습니다.")
+
+    quality = {
+        "face_center_offset_x_px": center_offset_x,
+        "face_center_offset_x_ratio": center_offset_x_ratio,
+        "eye_level_diff_px": eye_level_diff_px,
+        "eye_level_diff_to_face_width_ratio": eye_level_diff_to_face_width_ratio,
+        "face_size_ratio": face_size_ratio,
+        "frontal_score": frontal_score,
+        "eye_level_score": eye_level_score,
+        "quality_score": quality_score,
+        "warnings": warnings
+    }
 
     ratios = {
         "face_height_px": round(face_height, 2),
@@ -256,5 +289,6 @@ def build_face_analysis_data(landmarks: list) -> dict:
         "key_landmarks": key_landmarks,
         "ratios": ratios,
         "centers": centers,
+        "quality": quality,
         "overlay": overlay
     }
