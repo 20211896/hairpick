@@ -41,6 +41,7 @@ class AnalyzeFaceResponse(BaseModel):
     face_detected: bool
     face_count: int
     filename: Optional[str] = None
+    error_code: Optional[str] = None
     content_type: Optional[str] = None
     file_size_bytes: Optional[int] = None
     image_size: Optional[ImageSize] = None

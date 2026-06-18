@@ -64,6 +64,7 @@ async def analyze_face(file: UploadFile = File(...)):
             "face_detected": False,
             "face_count": 0,
             "filename": file.filename,
+            "error_code": "NO_FACE_DETECTED",
             "image_size": image_size,
             "message": "이미지에서 얼굴을 찾을 수 없습니다."
         }
@@ -74,6 +75,7 @@ async def analyze_face(file: UploadFile = File(...)):
             "face_detected": True,
             "face_count": face_count,
             "filename": file.filename,
+            "error_code": "MULTIPLE_FACES_DETECTED",
             "image_size": image_size,
             "message": "여러 명의 얼굴이 감지되었습니다. 한 명의 얼굴만 포함된 이미지를 사용해주세요."
         }
