@@ -8,3 +8,8 @@ __pycache__/
 sample*.jpg
 sample*.jpeg
 sample*.png
+
+# Local error/edge-case test images
+errsample*.jpg
+errsample*.jpeg
+errsample*.png
