@@ -26,6 +26,8 @@ class QualityResult(BaseModel):
     frontal_score: float
     eye_level_score: float
     quality_score: float
+    quality_status: str
+    is_acceptable: bool
     warnings: List[str]
 
 

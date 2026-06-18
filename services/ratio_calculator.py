@@ -156,6 +156,16 @@ def build_face_analysis_data(landmarks: list) -> dict:
 
     quality_score = round((frontal_score * 0.6) + (eye_level_score * 0.4), 4)
 
+    if quality_score < 0.4:
+        quality_status = "low"
+        is_acceptable = False
+    elif quality_score < 0.7:
+        quality_status = "warning"
+        is_acceptable = True
+    else:
+        quality_status = "good"
+        is_acceptable = True
+
     warnings = []
 
     if center_offset_x_ratio >= 0.12:
@@ -173,6 +183,8 @@ def build_face_analysis_data(landmarks: list) -> dict:
         "frontal_score": frontal_score,
         "eye_level_score": eye_level_score,
         "quality_score": quality_score,
+        "quality_status": quality_status,
+        "is_acceptable": is_acceptable,
         "warnings": warnings
     }
 
