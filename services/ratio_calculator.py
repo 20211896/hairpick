@@ -190,6 +190,17 @@ def build_face_analysis_data(landmarks: list) -> dict:
 
     overlay_points = key_landmarks
 
+    overlay_point_list = [
+        {
+            "name": name,
+            "index": point.get("index"),
+            "x": point.get("x"),
+            "y": point.get("y"),
+            "z": point.get("z")
+        }
+        for name, point in key_landmarks.items()
+    ]
+
     overlay_lines = [
         {
             "name": "face_height",
@@ -237,6 +248,7 @@ def build_face_analysis_data(landmarks: list) -> dict:
 
     overlay = {
         "points": overlay_points,
+        "point_list": overlay_point_list,
         "lines": overlay_lines
     }
 
