@@ -293,12 +293,26 @@ def classify_face_shape(ratios: dict) -> dict:
     best_type, best_score = sorted_scores[0]
     second_type, second_score = sorted_scores[1]
 
-    confidence = clamp(0.45 + (best_score - second_score) * 0.8)
+    classification_margin = round(best_score - second_score, 4)
+    confidence = clamp(0.45 + classification_margin * 0.8)
+
+    if classification_margin < 0.05:
+        confidence_level = "low"
+        is_borderline = True
+    elif classification_margin < 0.15:
+        confidence_level = "medium"
+        is_borderline = False
+    else:
+        confidence_level = "high"
+        is_borderline = False
 
     return {
         "type": best_type,
         "label_ko": labels[best_type],
         "confidence": round(confidence, 4),
+        "confidence_level": confidence_level,
+        "classification_margin": classification_margin,
+        "is_borderline": is_borderline,
         "reason": reasons[best_type],
         "score_breakdown": scores,
         "second_candidate": {

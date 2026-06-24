@@ -12,6 +12,9 @@ class FaceShapeResult(BaseModel):
     type: str
     label_ko: str
     confidence: float
+    confidence_level: Optional[str] = None
+    classification_margin: Optional[float] = None
+    is_borderline: Optional[bool] = None
     reason: str
     score_breakdown: Dict[str, float]
     second_candidate: Optional[Dict[str, Any]] = None
