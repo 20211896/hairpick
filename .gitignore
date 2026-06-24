@@ -13,3 +13,9 @@ sample*.png
 errsample*.jpg
 errsample*.jpeg
 errsample*.png
+
+# Local face shape test dataset
+sampleimg/
+
+# Local experiment outputs
+results/

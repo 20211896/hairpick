@@ -65,20 +65,20 @@ def classify_face_shape(ratios: dict) -> dict:
     # -----------------------------
 
     shortness = score_below(length_width, 1.17, 0.12)
-    longness = score_above(length_width, 1.22, 0.18)
-    very_long = score_above(length_width, 1.30, 0.10)
+    longness = score_above(length_width, 1.20, 0.12)
+    very_long = score_above(length_width, 1.26, 0.10)
 
     jaw_narrowness = score_below(jaw_to_cheekbone, 0.76, 0.16)
-    jaw_broadness = score_above(jaw_to_cheekbone, 0.79, 0.16)
+    jaw_broadness = score_above(jaw_to_cheekbone, 0.785, 0.08)
 
     lower_jaw_narrowness = score_below(lower_jaw_to_cheekbone, 0.54, 0.12)
-    lower_jaw_broadness = score_above(lower_jaw_to_cheekbone, 0.55, 0.12)
+    lower_jaw_broadness = score_above(lower_jaw_to_cheekbone, 0.545, 0.08)
 
     forehead_narrowness = score_below(forehead_to_cheekbone, 0.72, 0.12)
     forehead_broadness = score_above(forehead_to_cheekbone, 0.74, 0.12)
 
     taper_strong = score_below(jaw_taper_ratio, 0.69, 0.10)
-    taper_weak = score_above(jaw_taper_ratio, 0.70, 0.12)
+    taper_weak = score_above(jaw_taper_ratio, 0.685, 0.08)
 
     cheekbone_dominance = clamp(
         ((1 - forehead_to_cheekbone) * 0.40) +
@@ -123,8 +123,8 @@ def classify_face_shape(ratios: dict) -> dict:
     # -----------------------------
     # 긴형은 세로/가로 비율을 가장 강하게 반영
     long_score = (
-        longness * 0.55 +
-        very_long * 0.35 +
+        longness * 0.65 +
+        very_long * 0.25 +
         score_above(lower_face_ratio, 0.39, 0.12) * 0.10
     )
 
@@ -132,9 +132,18 @@ def classify_face_shape(ratios: dict) -> dict:
     long_score -= cheekbone_dominance * 0.06
     long_score = clamp(long_score)
 
-    # L/W가 1.32 이상이면 긴형을 강하게 보정
-    if length_width >= 1.32:
-        long_score += 0.18
+    # L/W가 1.24 이상이면 긴형 후보를 강화한다.
+    # Kaggle Oblong 샘플의 평균 L/W가 약 1.25 근처였기 때문에 기존 1.32 기준은 너무 엄격했다.
+    if length_width >= 1.28:
+        long_score += 0.22
+    elif length_width >= 1.25:
+        long_score += 0.16
+    elif length_width >= 1.24:
+        long_score += 0.13
+
+    # 얼굴이 충분히 길고 둥근형 특징이 약하면 긴형 후보를 추가 강화
+    if length_width >= 1.245 and shortness < 0.20:
+        long_score += 0.08
 
     long_score = clamp(long_score)
 
@@ -205,13 +214,13 @@ def classify_face_shape(ratios: dict) -> dict:
 
     # 특징형이 충분히 강하면 oval을 fallback으로 밀어냄
     if special_strength >= 0.60:
-        oval_score -= 0.35
+        oval_score -= 0.40
     elif special_strength >= 0.50:
-        oval_score -= 0.25
+        oval_score -= 0.32
     elif special_strength >= 0.40:
-        oval_score -= 0.15
-    elif special_strength >= 0.32:
-        oval_score -= 0.08
+        oval_score -= 0.22
+    elif special_strength >= 0.30:
+        oval_score -= 0.12
 
     oval_score = clamp(oval_score)
 
@@ -219,9 +228,11 @@ def classify_face_shape(ratios: dict) -> dict:
     # 추가 직접 보정
     # -----------------------------
 
-    # 긴형 직접 보정: L/W가 1.33 이상이면 oval보다 긴형 우선
-    if length_width >= 1.33 and long_score < oval_score:
+    # 긴형 직접 보정: L/W가 충분히 높고 둥근형 특징이 약하면 oval보다 긴형을 우선 후보로 올린다.
+    if length_width >= 1.275 and shortness < 0.15 and long_score < oval_score:
         long_score = min(1.0, oval_score + 0.05)
+    elif length_width >= 1.255 and shortness < 0.10 and long_score >= 0.45 and long_score < oval_score:
+        long_score = min(1.0, oval_score + 0.03)
 
     # 사각형 직접 보정:
     # L/W가 낮고, 아래턱 폭이 유지되며, 턱선이 덜 좁아지면 사각형 우선
@@ -234,6 +245,29 @@ def classify_face_shape(ratios: dict) -> dict:
     elif length_width <= 1.15 and jaw_to_cheekbone >= 0.79:
         if round_score < oval_score:
             round_score = min(1.0, oval_score + 0.04)
+
+    # 사각형 추가 보정:
+    # v5에서는 square 보정이 과해서 oval/round를 일부 잡아먹었다.
+    # 턱 폭, 아래턱 폭, taper가 모두 유지되는 경우에만 square를 강화한다.
+    if (
+        jaw_to_cheekbone >= 0.805
+        and lower_jaw_to_cheekbone >= 0.558
+        and jaw_taper_ratio >= 0.692
+    ):
+        square_score += 0.14
+
+        if 1.12 <= length_width <= 1.22:
+            square_score += 0.06
+
+        square_score = clamp(square_score)
+
+        if square_score >= 0.50 and square_score < oval_score:
+            square_score = min(1.0, oval_score + 0.03)
+
+    # 짧은 얼굴에서는 square보다 round가 우선될 수 있도록 보정
+    if length_width <= 1.13 and round_score >= 0.50:
+        square_score = min(square_score, round_score - 0.02)
+
 
     # 하트형 직접 보정:
     # 턱과 아래턱이 좁더라도, 이마/상단 폭이 충분히 유지될 때만 하트형 강화
@@ -260,6 +294,21 @@ def classify_face_shape(ratios: dict) -> dict:
     # -----------------------------
     # 최종 점수 정리
     # -----------------------------
+
+    # v8 square override:
+    # 500장 테스트 결과, square는 oval/round로 많이 흡수되었다.
+    # 턱 폭, 아래턱 폭, taper가 함께 유지되고 L/W가 너무 길지 않은 경우 square 후보를 보정한다.
+    # 조건은 500장 CSV threshold 탐색 기준:
+    # jaw>=0.802, lower_jaw>=0.556, taper>=0.690, 1.10<=L/W<=1.23
+    if (
+        jaw_to_cheekbone >= 0.802
+        and lower_jaw_to_cheekbone >= 0.556
+        and jaw_taper_ratio >= 0.690
+        and 1.10 <= length_width <= 1.23
+        and square_score < oval_score
+        and round_score < 0.72
+    ):
+        square_score = min(1.0, max(square_score, oval_score + 0.025))
 
     scores = {
         "round": round(clamp(round_score), 4),
