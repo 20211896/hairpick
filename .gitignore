@@ -19,3 +19,10 @@ sampleimg/
 
 # Local experiment outputs
 results/
+
+# Large datasets, sample images, and benchmark results
+sample/
+sampleimg/
+results/
+*.log
+.vscode-server/

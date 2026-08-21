@@ -1,0 +1,36 @@
+{
+  "model_name": "ExtraTrees",
+  "cv_mean": 0.5559999999999999,
+  "cv_std": 0.03261901286060018,
+  "holdout_accuracy": 0.552,
+  "feature_columns": [
+    "ratio_face_length_width_ratio",
+    "ratio_forehead_to_cheekbone_ratio",
+    "ratio_jaw_to_cheekbone_ratio",
+    "ratio_jaw_angle_width_to_cheekbone_ratio",
+    "ratio_chin_to_jaw_depth_to_face_height_ratio",
+    "ratio_lower_face_height_to_face_height_ratio",
+    "ratio_lower_jaw_width_to_cheekbone_ratio",
+    "ratio_jaw_taper_ratio",
+    "ratio_forehead_to_jaw_ratio",
+    "ratio_forehead_to_lower_jaw_ratio",
+    "ratio_jaw_to_face_width_ratio",
+    "ratio_lower_jaw_to_face_width_ratio",
+    "ratio_chin_sharpness_ratio",
+    "ratio_nose_length_to_face_height_ratio",
+    "ratio_mouth_width_to_face_width_ratio",
+    "quality_quality_score",
+    "quality_frontal_score",
+    "quality_eye_level_score",
+    "quality_face_center_offset_x_ratio",
+    "quality_eye_level_diff_to_face_width_ratio"
+  ],
+  "labels": [
+    "heart",
+    "long",
+    "oval",
+    "round",
+    "square"
+  ],
+  "source_csv": "results/face_shape_random_500_v9_heart_analysis.csv"
+}

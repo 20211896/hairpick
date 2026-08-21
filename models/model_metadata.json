@@ -1,0 +1,27 @@
+{
+  "model_name": "TunedLogistic",
+  "cv_accuracy": 57.03,
+  "features": [
+    "face_length_width_ratio",
+    "forehead_to_cheekbone_ratio",
+    "jaw_to_cheekbone_ratio",
+    "forehead_to_jaw_ratio",
+    "forehead_to_lower_jaw_ratio",
+    "lower_jaw_width_to_cheekbone_ratio",
+    "chin_sharpness_ratio",
+    "jaw_taper_ratio",
+    "lower_face_height_to_face_height_ratio",
+    "gonial_angle_proxy",
+    "temple_to_cheekbone_ratio",
+    "jaw_slope_angle",
+    "jawline_curvature_index",
+    "midface_height_ratio"
+  ],
+  "classes": [
+    "heart",
+    "long",
+    "oval",
+    "round",
+    "square"
+  ]
+}

@@ -1,12 +1,16 @@
 import math
 
 def distance(p1: dict, p2: dict) -> float:
-    """두 랜드마크 좌표 사이의 2D 유클리드 거리 계산"""
+    """
+    두 랜드마크 좌표 사이의 2D 거리 계산
+    """
     return math.sqrt((p1["x"] - p2["x"]) ** 2 + (p1["y"] - p2["y"]) ** 2)
 
 
 def midpoint(p1: dict, p2: dict) -> dict:
-    """두 점의 중점 계산"""
+    """
+    두 점의 중점 계산
+    """
     return {
         "x": (p1["x"] + p2["x"]) / 2,
         "y": (p1["y"] + p2["y"]) / 2
@@ -14,144 +18,116 @@ def midpoint(p1: dict, p2: dict) -> dict:
 
 
 def safe_ratio(numerator: float, denominator: float) -> float:
-    """0으로 나누는 오류 방지용 비율 계산"""
+    """
+    0으로 나누는 오류 방지용 비율 계산
+    """
     if denominator == 0:
         return 0.0
     return round(numerator / denominator, 4)
 
 
-def get_angle(p1: dict, p2: dict, p3: dict) -> float:
-    """p2(꼭짓점) 기준 세 점이 이루는 2D 각도(Degree) 계산"""
-    v1 = (p1["x"] - p2["x"], p1["y"] - p2["y"])
-    v2 = (p3["x"] - p2["x"], p3["y"] - p2["y"])
-    
-    dot = v1[0] * v2[0] + v1[1] * v2[1]
-    mag1 = math.sqrt(v1[0]**2 + v1[1]**2)
-    mag2 = math.sqrt(v2[0]**2 + v2[1]**2)
-    
-    if mag1 * mag2 == 0:
-        return 0.0
-        
-    cos_theta = max(-1.0, min(1.0, dot / (mag1 * mag2)))
-    return round(math.degrees(math.acos(cos_theta)), 2)
-
-
-def get_line_residual(points: list) -> float:
-    """점들이 일직선에서 벗어난 정도 (턱선 곡률 잔차 RMSE 계산)"""
-    n = len(points)
-    if n <= 2:
-        return 0.0
-        
-    x = [p["x"] for p in points]
-    y = [p["y"] for p in points]
-    
-    mean_x = sum(x) / n
-    mean_y = sum(y) / n
-    
-    num = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
-    den = sum((x[i] - mean_x) ** 2 for i in range(n))
-    
-    if den == 0:
-        return 0.0
-        
-    slope = num / den
-    intercept = mean_y - slope * mean_x
-    
-    residuals = [(y[i] - (slope * x[i] + intercept)) ** 2 for i in range(n)]
-    rmse = math.sqrt(sum(residuals) / n)
-    return round(rmse, 4)
-
-
 def build_face_analysis_data(landmarks: list) -> dict:
-    """MediaPipe Face Mesh 랜드마크 리스트 기반 데이터 분석"""
+    """
+    MediaPipe Face Mesh 랜드마크 리스트를 기반으로
+    주요 랜드마크, 비율, 중심점, 오버레이 데이터를 생성한다.
+    """
 
-    # 1. 주요 랜드마크 매핑
+    # 9. 주요 랜드마크 추출
     key_landmarks = {
+        # 얼굴 세로 기준
         "top_face": landmarks[10],
         "chin": landmarks[152],
+
+        # 얼굴 전체 너비 기준
         "left_face_outer": landmarks[234],
         "right_face_outer": landmarks[454],
+
+        # 이마 폭 추정 기준
         "left_forehead": landmarks[103],
         "right_forehead": landmarks[332],
-        "left_temple": landmarks[54],
-        "right_temple": landmarks[284],
+
+        # 광대 폭 추정 기준
         "left_cheekbone": landmarks[234],
         "right_cheekbone": landmarks[454],
+
+        # 턱 폭 추정 기준
         "left_jaw": landmarks[172],
         "right_jaw": landmarks[397],
+
+        # 턱선 형태 분석 기준
         "left_jaw_angle": landmarks[172],
         "right_jaw_angle": landmarks[397],
         "left_lower_jaw": landmarks[150],
         "right_lower_jaw": landmarks[379],
+
+        # 눈 기준
         "left_eye_outer": landmarks[33],
         "right_eye_outer": landmarks[263],
         "left_eye_inner": landmarks[133],
         "right_eye_inner": landmarks[362],
+
+        # 코 기준
         "nose_bridge": landmarks[168],
         "nose_tip": landmarks[1],
-        "subnasale": landmarks[2],
+
+        # 입 기준
         "mouth_left": landmarks[61],
         "mouth_right": landmarks[291],
         "mouth_top": landmarks[13],
-        "mouth_bottom": landmarks[14],
-        "upper_lip": landmarks[0]
+        "mouth_bottom": landmarks[14]
     }
 
-    # 2. 좌표 변수 할당
+    # 10. 비율 계산
     top_face = key_landmarks["top_face"]
     chin = key_landmarks["chin"]
+
     left_face_outer = key_landmarks["left_face_outer"]
     right_face_outer = key_landmarks["right_face_outer"]
+
     left_forehead = key_landmarks["left_forehead"]
     right_forehead = key_landmarks["right_forehead"]
-    left_temple = key_landmarks["left_temple"]
-    right_temple = key_landmarks["right_temple"]
+
     left_cheekbone = key_landmarks["left_cheekbone"]
     right_cheekbone = key_landmarks["right_cheekbone"]
+
     left_jaw = key_landmarks["left_jaw"]
     right_jaw = key_landmarks["right_jaw"]
+
     left_jaw_angle = key_landmarks["left_jaw_angle"]
     right_jaw_angle = key_landmarks["right_jaw_angle"]
     left_lower_jaw = key_landmarks["left_lower_jaw"]
     right_lower_jaw = key_landmarks["right_lower_jaw"]
+
     left_eye_outer = key_landmarks["left_eye_outer"]
     right_eye_outer = key_landmarks["right_eye_outer"]
     left_eye_inner = key_landmarks["left_eye_inner"]
     right_eye_inner = key_landmarks["right_eye_inner"]
+
     nose_bridge = key_landmarks["nose_bridge"]
     nose_tip = key_landmarks["nose_tip"]
-    subnasale = key_landmarks["subnasale"]
+
     mouth_left = key_landmarks["mouth_left"]
     mouth_right = key_landmarks["mouth_right"]
     mouth_top = key_landmarks["mouth_top"]
     mouth_bottom = key_landmarks["mouth_bottom"]
-    upper_lip = key_landmarks["upper_lip"]
 
-    # 3. 기본 기하 연산
     face_height = distance(top_face, chin)
     face_width = distance(left_face_outer, right_face_outer)
     face_length_width_ratio = safe_ratio(face_height, face_width)
 
     forehead_width = distance(left_forehead, right_forehead)
-    temple_width = distance(left_temple, right_temple)
     cheekbone_width = distance(left_cheekbone, right_cheekbone)
     jaw_width = distance(left_jaw, right_jaw)
 
     lower_jaw_width = distance(left_lower_jaw, right_lower_jaw)
     jaw_taper_ratio = safe_ratio(lower_jaw_width, jaw_width)
 
-    forehead_to_jaw_ratio = safe_ratio(forehead_width, jaw_width)
-    forehead_to_lower_jaw_ratio = safe_ratio(forehead_width, lower_jaw_width)
-    jaw_to_face_width_ratio = safe_ratio(jaw_width, face_width)
-    lower_jaw_to_face_width_ratio = safe_ratio(lower_jaw_width, face_width)
-
     jaw_angle_width = distance(left_jaw_angle, right_jaw_angle)
+
     jaw_angle_center = midpoint(left_jaw_angle, right_jaw_angle)
     lower_jaw_center = midpoint(left_lower_jaw, right_lower_jaw)
 
     chin_to_jaw_depth = abs(chin["y"] - jaw_angle_center["y"])
-    chin_sharpness_ratio = safe_ratio(chin_to_jaw_depth, lower_jaw_width)
-
     lower_face_height = abs(chin["y"] - nose_tip["y"])
 
     eye_outer_width = distance(left_eye_outer, right_eye_outer)
@@ -161,35 +137,6 @@ def build_face_analysis_data(landmarks: list) -> dict:
     mouth_width = distance(mouth_left, mouth_right)
     mouth_height = distance(mouth_top, mouth_bottom)
 
-    # 4. 정밀 피처 9종 연산
-    midface_height = distance(nose_bridge, subnasale)
-    midface_height_ratio = safe_ratio(midface_height, face_height)
-
-    philtrum_len = distance(subnasale, upper_lip)
-    lower_chin_len = distance(upper_lip, chin)
-    philtrum_to_chin_ratio = safe_ratio(philtrum_len, lower_chin_len)
-
-    temple_to_cheekbone_ratio = safe_ratio(temple_width, cheekbone_width)
-    gonial_angle_proxy = get_angle(right_cheekbone, right_jaw, chin)
-
-    jaw_line_pts = [landmarks[idx] for idx in [454, 397, 365, 377, 152]]
-    jawline_curvature_index = safe_ratio(get_line_residual(jaw_line_pts), cheekbone_width)
-
-    cheekbone_peak_y_ratio = safe_ratio(abs(right_cheekbone["y"] - top_face["y"]), face_height)
-
-    dy = chin["y"] - right_jaw["y"]
-    dx = chin["x"] - right_jaw["x"]
-    jaw_slope_angle = round(math.degrees(math.atan2(dy, dx)), 2)
-
-    intercanthal_to_face_width = safe_ratio(eye_inner_distance, cheekbone_width)
-
-    # [수정] 코/미간 중심축 기준 좌우 대칭성 오차 계산
-    left_dist = abs(nose_bridge["x"] - left_cheekbone["x"])
-    right_dist = abs(right_cheekbone["x"] - nose_bridge["x"])
-    asymmetry_err = abs(left_dist - right_dist)
-    facial_asymmetry_index = safe_ratio(asymmetry_err, cheekbone_width)
-
-    # 5. 품질 평가
     face_center = midpoint(left_face_outer, right_face_outer)
     eye_center = midpoint(left_eye_outer, right_eye_outer)
     mouth_center = midpoint(mouth_left, mouth_right)
@@ -200,8 +147,13 @@ def build_face_analysis_data(landmarks: list) -> dict:
     eye_level_diff_px = round(abs(left_eye_outer["y"] - right_eye_outer["y"]), 2)
     eye_level_diff_to_face_width_ratio = safe_ratio(eye_level_diff_px, face_width)
 
+    # 이미지 크기 정보가 없는 단계이므로 얼굴 자체 기준 품질만 계산한다.
+    # face_size_ratio는 추후 image_size 기반으로 보강할 수 있다.
+    face_size_ratio = None
+
     frontal_score = max(0.0, round(1 - min(center_offset_x_ratio / 0.12, 1), 4))
     eye_level_score = max(0.0, round(1 - min(eye_level_diff_to_face_width_ratio / 0.08, 1), 4))
+
     quality_score = round((frontal_score * 0.6) + (eye_level_score * 0.4), 4)
 
     if quality_score < 0.4:
@@ -215,8 +167,10 @@ def build_face_analysis_data(landmarks: list) -> dict:
         is_acceptable = True
 
     warnings = []
+
     if center_offset_x_ratio >= 0.12:
         warnings.append("얼굴 중심과 코 위치 차이가 커서 정면성이 낮을 수 있습니다.")
+
     if eye_level_diff_to_face_width_ratio >= 0.08:
         warnings.append("좌우 눈 높이 차이가 커서 얼굴이 기울어졌을 수 있습니다.")
 
@@ -225,7 +179,7 @@ def build_face_analysis_data(landmarks: list) -> dict:
         "face_center_offset_x_ratio": center_offset_x_ratio,
         "eye_level_diff_px": eye_level_diff_px,
         "eye_level_diff_to_face_width_ratio": eye_level_diff_to_face_width_ratio,
-        "face_size_ratio": None,
+        "face_size_ratio": face_size_ratio,
         "frontal_score": frontal_score,
         "eye_level_score": eye_level_score,
         "quality_score": quality_score,
@@ -238,44 +192,37 @@ def build_face_analysis_data(landmarks: list) -> dict:
         "face_height_px": round(face_height, 2),
         "face_width_px": round(face_width, 2),
         "face_length_width_ratio": face_length_width_ratio,
+
         "forehead_width_px": round(forehead_width, 2),
         "cheekbone_width_px": round(cheekbone_width, 2),
         "jaw_width_px": round(jaw_width, 2),
         "forehead_to_cheekbone_ratio": safe_ratio(forehead_width, cheekbone_width),
         "jaw_to_cheekbone_ratio": safe_ratio(jaw_width, cheekbone_width),
+
         "jaw_angle_width_px": round(jaw_angle_width, 2),
         "jaw_angle_width_to_cheekbone_ratio": safe_ratio(jaw_angle_width, cheekbone_width),
         "chin_to_jaw_depth_px": round(chin_to_jaw_depth, 2),
         "chin_to_jaw_depth_to_face_height_ratio": safe_ratio(chin_to_jaw_depth, face_height),
         "lower_face_height_px": round(lower_face_height, 2),
         "lower_face_height_to_face_height_ratio": safe_ratio(lower_face_height, face_height),
+
         "eye_outer_width_px": round(eye_outer_width, 2),
         "eye_inner_distance_px": round(eye_inner_distance, 2),
         "eye_outer_width_to_face_width_ratio": safe_ratio(eye_outer_width, face_width),
         "eye_inner_distance_to_face_width_ratio": safe_ratio(eye_inner_distance, face_width),
+
         "lower_jaw_width_px": round(lower_jaw_width, 2),
         "lower_jaw_width_to_cheekbone_ratio": safe_ratio(lower_jaw_width, cheekbone_width),
         "jaw_taper_ratio": jaw_taper_ratio,
-        "forehead_to_jaw_ratio": forehead_to_jaw_ratio,
-        "forehead_to_lower_jaw_ratio": forehead_to_lower_jaw_ratio,
-        "jaw_to_face_width_ratio": jaw_to_face_width_ratio,
-        "lower_jaw_to_face_width_ratio": lower_jaw_to_face_width_ratio,
-        "chin_sharpness_ratio": chin_sharpness_ratio,
+
         "nose_length_px": round(nose_length, 2),
         "nose_length_to_face_height_ratio": safe_ratio(nose_length, face_height),
+
         "mouth_width_px": round(mouth_width, 2),
         "mouth_height_px": round(mouth_height, 2),
         "mouth_width_to_face_width_ratio": safe_ratio(mouth_width, face_width),
-        "nose_center_offset_x_px": center_offset_x,
-        "midface_height_ratio": midface_height_ratio,
-        "philtrum_to_chin_ratio": philtrum_to_chin_ratio,
-        "temple_to_cheekbone_ratio": temple_to_cheekbone_ratio,
-        "gonial_angle_proxy": gonial_angle_proxy,
-        "jawline_curvature_index": jawline_curvature_index,
-        "cheekbone_peak_y_ratio": cheekbone_peak_y_ratio,
-        "jaw_slope_angle": jaw_slope_angle,
-        "intercanthal_to_face_width": intercanthal_to_face_width,
-        "facial_asymmetry_index": facial_asymmetry_index
+
+        "nose_center_offset_x_px": center_offset_x
     }
 
     centers = {
@@ -287,6 +234,7 @@ def build_face_analysis_data(landmarks: list) -> dict:
     }
 
     overlay_points = key_landmarks
+
     overlay_point_list = [
         {
             "name": name,
@@ -299,13 +247,48 @@ def build_face_analysis_data(landmarks: list) -> dict:
     ]
 
     overlay_lines = [
-        {"name": "face_height", "label_ko": "얼굴 세로 길이", "from": "top_face", "to": "chin"},
-        {"name": "face_width", "label_ko": "얼굴 전체 너비", "from": "left_face_outer", "to": "right_face_outer"},
-        {"name": "forehead_width", "label_ko": "이마 폭", "from": "left_forehead", "to": "right_forehead"},
-        {"name": "cheekbone_width", "label_ko": "광대 폭", "from": "left_cheekbone", "to": "right_cheekbone"},
-        {"name": "jaw_width", "label_ko": "턱 폭", "from": "left_jaw", "to": "right_jaw"},
-        {"name": "lower_jaw_width", "label_ko": "아래턱 폭", "from": "left_lower_jaw", "to": "right_lower_jaw"},
-        {"name": "lower_face_height", "label_ko": "하관 길이", "from": "nose_tip", "to": "chin"}
+        {
+            "name": "face_height",
+            "label_ko": "얼굴 세로 길이",
+            "from": "top_face",
+            "to": "chin"
+        },
+        {
+            "name": "face_width",
+            "label_ko": "얼굴 전체 너비",
+            "from": "left_face_outer",
+            "to": "right_face_outer"
+        },
+        {
+            "name": "forehead_width",
+            "label_ko": "이마 폭",
+            "from": "left_forehead",
+            "to": "right_forehead"
+        },
+        {
+            "name": "cheekbone_width",
+            "label_ko": "광대 폭",
+            "from": "left_cheekbone",
+            "to": "right_cheekbone"
+        },
+        {
+            "name": "jaw_width",
+            "label_ko": "턱 폭",
+            "from": "left_jaw",
+            "to": "right_jaw"
+        },
+        {
+            "name": "lower_jaw_width",
+            "label_ko": "아래턱 폭",
+            "from": "left_lower_jaw",
+            "to": "right_lower_jaw"
+        },
+        {
+            "name": "lower_face_height",
+            "label_ko": "하관 길이",
+            "from": "nose_tip",
+            "to": "chin"
+        }
     ]
 
     overlay = {
