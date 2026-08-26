@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 lightgbm
-mediapipe
+mediapipe==0.10.14
 joblib
 scikit-learn
 numpy
