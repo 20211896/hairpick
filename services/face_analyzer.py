@@ -142,19 +142,7 @@ FEATURE_SCHEMA = {
     ]
 }
 
-# 파이썬 3.14 및 최신 mediapipe 호환 안전 임포트
-try:
-    import mediapipe as mp
-    if hasattr(mp, 'solutions') and hasattr(mp.solutions, 'face_mesh'):
-        mp_face_mesh = mp.solutions.face_mesh
-    else:
-        # 최신 환경에서 우회가 안 될 경우를 대비한 대안 경로
-        import mediapipe.python.solutions as mp_solutions
-        mp_face_mesh = mp_solutions.face_mesh
-except Exception:
-    # 모듈 구조가 완전히 다른 경우를 대비한 예외 처리
-    import mediapipe.python.solutions.face_mesh as mp_face_mesh
-
+mp_face_mesh = mp.solutions.face_mesh
 face_mesh_detector = mp_face_mesh.FaceMesh(
     static_image_mode=True,
     max_num_faces=1,
