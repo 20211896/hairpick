@@ -142,8 +142,12 @@ FEATURE_SCHEMA = {
     ]
 }
 
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh_detector = mp_face_mesh.FaceMesh(
+# 파이썬 3.14 및 최신 mediapipe 호환 우회 임포트
+try:
+    mp_face_mesh = mp.solutions.face_mesh
+except AttributeError:
+    import mediapipe.python.solutions as mp_solutions
+    mp_face_mesh = mp_solutions.face_meshface_mesh_detector = mp_face_mesh.FaceMesh(
     static_image_mode=True,
     max_num_faces=1,
     refine_landmarks=True,
